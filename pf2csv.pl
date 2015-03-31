@@ -149,7 +149,7 @@ while (<STDIN>) {
 	}
 
 	if ($output eq "full") {
-		print "$timestamp $rulenumber $action $direction $interface $sip $sport $dip $dport $flags $proto $app $rest\n";
+		print "$timestamp,$rulenumber,$action,$direction,$interface,$sip,$sport,$dip,$dport,$flags,$proto,$app,$rest\n";
 	} else {
 		my @tokens = split / /,$output;
 		print ${shift(@tokens)};
