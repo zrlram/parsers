@@ -38,7 +38,7 @@ while (<STDIN>) {
     $_ = $line;
     s/,/\t/g;
     push (@out,$_);
-    if (scalar(@tokens) > $longest) { $longest = scalar(@tokens); print $longest; }
+    if (scalar(@tokens) > $longest) { $longest = scalar(@tokens); }
 }
 # print header line first
 print "COUNT";
