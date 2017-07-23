@@ -16,42 +16,51 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
-# Title: 	CSV to TM3
+# Title:    CSV to TM3
 #
-# File: 	csv2tm3.pl
+# File:     csv2tm3.pl
 #
+# Updates
+# 
+# 11/5/15   Fixing output so that trailing tabs are inserted for short line
+#
+
 use strict vars;
 
 my @out;
 my $firstLine = 1;
+my $longest = 0;
 while (<STDIN>) {
     chomp;
-	my $line = $_;
+    my $line = $_;
 
     my @tokens = split /,/,$line;
-    # print header line first
-    if ($firstLine) {
-        print "COUNT";
-        my $x = 1;
-        for my $t (@tokens) {
-            print "\tCOL".$x++;
-        }
-        print "\nINTEGER";
-        for my $t (@tokens) {
-            print "\tSTRING";
-        }
-        print "\n";
-        $firstLine = 0;
-    } 
     $_ = $line;
     s/,/\t/g;
     push (@out,$_);
+    if (scalar(@tokens) > $longest) { $longest = scalar(@tokens); print $longest; }
 }
+# print header line first
+print "COUNT";
+for (my $x=1; $x<=$longest; $x++) {
+    print "\tCOL".$x;
+}
+print "\nINTEGER";
+for (my $x=1; $x<=$longest; $x++) {
+    print "\tSTRING";
+}
+print "\n";
+
 my %unique = ();
 foreach my $item (@out)
 {
     $unique{$item} ++;
 }
+
 for my $line (sort keys %unique) {
-    print $unique{$line}."\t".$line."\n";
+    my $tokens = scalar(split/\t/,$line);
+    my $residual;
+    if ($tokens < $longest) { $residual = "\t" x ($longest-$tokens);}
+    print $unique{$line}."\t".$line.$residual."\n";
 }
+
