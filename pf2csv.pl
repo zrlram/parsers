@@ -174,9 +174,8 @@ while (<STDIN>) {
 		for my $token (@tokens) {
 			if (!defined($$token)) {
 				$DEBUG && print STDERR "$token is not a known field\n";
+				#print $input;
 				#exit;
-				print $input;
-				exit;
 				print ',';
 			} else {
 				print ','.$$token;
