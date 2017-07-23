@@ -44,6 +44,7 @@
 # 04/15/06	Reversing should be optional. It messes things up per interface!
 #		Need to expose via command line (later)
 #		Setting the reversed flag if log entry got reversed.
+# 07/23/17	Fixing DNS parsing 
 #
 ###############################################################################/
 
@@ -71,31 +72,27 @@ while (<STDIN>) {
 	$reversed="";
 
 	my $input = $_;
+	my $timesteamp, $rulenumber, $action, $direction, $interface, $sip, $dip, $sport, $dport, $rest;
 
 	if ($input =~ /(.*) rule ([-\d]+\/\d+)\(.*?\): (pass|block) (in|out) on (\w+): (\d+\.\d+\.\d+\.\d+)\.?(\d*) [<>] (\d+\.\d+\.\d+\.\d+)\.?(\d*): (.*)/) {
-		$input = "$1|$2|$3|$4|$5|$6|$7|$8|$9|$10";
+		$timestamp = $1;
+
+		$rulenumber = $2;
+		$action = $3;
+		$direction = $4;
+		$interface = $5;
+
+		$sip = $6;
+		$sport = $7;
+		$dip = $8;
+		$dport = $9;
+
+		$rest = $10;
+
 	} else {
 		$DEBUG && print STDERR "ERROR: $input\n";
 		next;
 	}
-
-	my @fields = split ('\|',$input);
-
-	# some sanitization
-	
-	$timestamp = $fields[0];
-
-	$rulenumber = $fields[1];
-	$action = $fields[2];
-	$direction = $fields[3];
-	$interface = $fields[4];
-
-	$sip = $fields[5];
-	$sport = $fields[6]; 
-	$dip = $fields[7];
-	$dport = $fields[8]; 
-
-	$rest = $fields[9];
 
 	# subparsing
 	
@@ -122,6 +119,27 @@ while (<STDIN>) {
 	if ($rest =~ /\d+ ServFail/) {
 		$proto="udp";
 		$app="dns";
+		$rest="";
+	}
+
+	# 13110[|domain] (DF)
+	# 7906+[|domain]
+	# 39323 [1au][|domain] 
+	if ($rest =~ /(\d+)\+? ?\[[^\]]+\]/) {
+		$proto="udp";
+		$len=$1;
+		$rest="";
+	}
+	# [|domain]	
+	if ($rest =~ /\[\|domain\]/) {
+		$proto="udp";
+		$rest="";
+	}
+
+	# 58305 MX? thenetcat.com. (31) (DF)
+	if ($rest =~ /(\d+)/) {
+		$proto="udp";
+		$len=$1;
 	}
 
 	if ($rest =~ /udp (\d+)/) {
@@ -157,6 +175,9 @@ while (<STDIN>) {
 			if (!defined($$token)) {
 				$DEBUG && print STDERR "$token is not a known field\n";
 				#exit;
+				print $input;
+				exit;
+				print ',';
 			} else {
 				print ','.$$token;
 			}
